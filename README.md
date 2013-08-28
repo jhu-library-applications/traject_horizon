@@ -24,7 +24,7 @@ and `traject_horizon` with:
 
     $ gem install traject traject_horizon
 
-### Or, if using a Gemfile with your traject project
+### Or, if using a bundler Gemfile with your traject project
 
 Add this line to your [traject project's Gemfile](https://github.com/jrochkind/traject/blob/master/doc/extending.md#or-with-bundler):
 
