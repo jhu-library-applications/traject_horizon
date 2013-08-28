@@ -15,23 +15,20 @@ yet further with more development of multi-threaded processing.
 
 ## Installation
 
-traject-horizon is a plugin for [traject](http://github.com/jrochkind/traject), first
-install traject with:
+traject_horizon is a plugin for [traject](http://github.com/jrochkind/traject), install
+them both:
 
-    $ gem install traject
+    $ gem install traject traject_horizon
 
-Then, add this line to your [traject project's Gemfile](https://github.com/jrochkind/traject/blob/master/doc/extending.md#or-with-bundler):
+### Or, if using a Gemfile with your traject project
 
-    gem 'traject-horizon'
+Add this line to your [traject project's Gemfile](https://github.com/jrochkind/traject/blob/master/doc/extending.md#or-with-bundler):
+
+    gem 'traject_horizon'
 
 And then execute:
 
     $ bundle install
-
-Or, if you prefer not to use a bundler Gemfile with your traject project, just
-install `traject-horizon` yourself as:
-
-    $ gem install traject-horizon
 
 ## Usage
 
