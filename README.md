@@ -3,7 +3,7 @@
 Export MARC records directly from a Horizon ILS rdbms, either as serialized MARC,
 or to then index to Solr.
 
-traject-horizon is a plugin for [traject](http://github.com/jrochkind/traject), and
+traject_horizon is a plugin for [traject](http://github.com/jrochkind/traject), and
 requires jruby to be installed.
 
 Supports embedding copy/item holdings information in exported MARC.
@@ -15,8 +15,12 @@ yet further with more development of multi-threaded processing.
 
 ## Installation
 
-traject_horizon is a plugin for [traject](http://github.com/jrochkind/traject), install
-them both:
+traject_horizon is a plugin for [traject](http://github.com/jrochkind/traject), which
+needs to run under jruby. We recommend [chruby](https://github.com/postmodern/chruby)
+for managing multiple ruby versions, see it's instructions for installing jruby. 
+
+Then, with jruby active (`$ chruby jruby`), you can install both `traject`
+and `traject_horizon` with:
 
     $ gem install traject traject_horizon
 
@@ -72,7 +76,7 @@ There are a variety of additional settings that apply to the HorizonReader,
 especially settings for customizing the item/copy holdings information
 included. See [HorizonReader] inline comment docs.
 
-Note by default `staff-only` records are _not_ included in the export,
+Note by default 'staff-only' records are _not_ included in the export,
 but this can be changed in settings.
 
 As with all traject settings, string-valued settings can also be supplied
@@ -102,7 +106,7 @@ using standard traject `-x marcout` functionality:
 
 ### Indexing records to solr
 
-Traject is primarily a tool for indexing to solr. You can use `traject-horizon` to
+Traject is primarily a tool for indexing to solr. You can use `traject_horizon` to
 export from Horizon and send directly through the indexing pipeline, without
 having to serialize MARC to disk first.
 
@@ -116,9 +120,9 @@ Then, simply:
 
 ## Note on character encodings
 
-By default, traject-horizon assumes the data in your Horizon database is stored
+By default, traject_horizon assumes the data in your Horizon database is stored
 in the Marc8 encoding. (I think this is true of all Horizon databases?). And by
-default, traject-horizon will transcode it to UTF-8, marking leader byte 9 in any
+default, traject_horizon will transcode it to UTF-8, marking leader byte 9 in any
 exported MARC appropriately (Using the Marc4J AnselConverter class).
 
 If you'd like traject to avoid this transcode, you can set the traject
@@ -145,7 +149,7 @@ and it may not be possible to output them in Marc8. Sorry.
 ## Challenges
 
 I had to reverse engineer the Horizon database to figure out how to turn it into
-MARC records.  I believe I have been succesful, and traject-horizon seems to produce
+MARC records.  I believe I have been succesful, and traject_horizon seems to produce
 the same output as Horizon's own marcout.
 
 Hopefully this will remain true in future Horizon versions, I don't think relevant
