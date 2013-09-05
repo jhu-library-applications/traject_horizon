@@ -261,7 +261,7 @@ module Traject
       # We're going to make our marc records in batches, and only yield
       # them to caller in batches, so we can fetch copy/item info in batches
       # for efficiency.
-      batch_size = settings["horizon.batch_size"]
+      batch_size = settings["horizon.batch_size"].to_i
       record_batch = []
 
       exclude_tags = (settings["horizon.exclude_tags"] || "").split(",")
