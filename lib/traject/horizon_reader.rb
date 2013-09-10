@@ -304,8 +304,6 @@ module Traject
             @thread_pool.maybe_in_thread_pool(batch) do |batch|
               enhance_batch!(extra_connection, batch)
               batch.each do |r|
-                # set current_bib_id for error logging
-                current_bib_id = r['001'].value
                 yield r
               end
             end
