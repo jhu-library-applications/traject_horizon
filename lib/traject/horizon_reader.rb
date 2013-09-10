@@ -385,6 +385,8 @@ module Traject
       logger.debug "HorizonReader: Waiting for threadpool work complete..."
       @thread_pool.shutdown_and_wait
       logger.debug "HorizonReader: threadpool work complete."
+      @thread_pool.raise_collected_exception!
+
 
       # yield last batch
       enhance_batch!(extra_connection, record_batch)
