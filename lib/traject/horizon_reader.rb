@@ -136,7 +136,11 @@ module Traject
 
       require_jars!
 
-      @thread_pool = Traject::ThreadPool.new( settings["horizon.thread_pool"].to_i )
+      pool_size     = settings["horizon.thread_pool"].to_i
+
+      logger.debug("HorizonReader with thread pool size #{pool_size}")
+
+      @thread_pool  = Traject::ThreadPool.new( pool_size )
     end
 
     # Requires marc4j and jtds, and java_import's some classes.
