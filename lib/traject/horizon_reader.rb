@@ -391,8 +391,6 @@ module Traject
       # yield last batch
       enhance_batch!(extra_connection, record_batch)
       record_batch.each do |r|
-        # reset bib_id for error message logging
-        current_bib_id = (f = r['001']) && f.value
         yield r
       end
       record_batch.clear
