@@ -123,15 +123,6 @@ module Traject
   # [jtds.jar_path]  Normally we'll use a distribution of jtds bundled with this gem.
   #                  But specify a filepath of a directory containing jtds jar(s),
   #                  and all jars in that dir will be loaded instead of our bundled jtds.
-  #
-  #
-  # Note: Could probably make this even faster by using a thread pool -- the bottleneck
-  # is probably processing into MARC, not the database query and streaming. But it's a
-  # bit tricky to refactor for concurrency there. Perhaps pull all the raw
-  # row values out and batch them in groups by bib#, then feed those lists
-  # to a threadpool. And then we'd just be fighting for CPU time with the
-  # threadpool for mapping, not sure if overall throughput increase would happen, would
-  # depend on exact environment.
   class HorizonReader
     attr_reader :settings
     attr_reader :things_to_close
