@@ -423,10 +423,6 @@ module Traject
       logger.info("HorizonReader: Closed JDBC objects")
     end
 
-    def process_batch(batch)
-
-    end
-
     # Pass in an array of MARC::Records', adds fields for copy and item
     # info if so configured. Returns record_batch so you can chain if you want.
     def enhance_batch!(conn, record_batch)
