@@ -109,14 +109,6 @@ module Traject
   # == Misc
   #
   # [horizon.batch_size] Batch size to use for fetching item/copy info on each bib. Default 400.
-  #
-  # [horizon.thread_pool] Default 2. HorizonReader uses threads to add some concurrency. If
-  #    set to >0, the work of secondary DB queries for item/copy info and the subsequent
-  #    yielding to caller will be done in threads. Playing with this number
-  #    may be able to increase performance -- recommend not setting it to 0
-  #    except maybe for debugging, having it at least 1 significantly improves
-  #    throughput. 
-  # 
   # [debug_ascii_progress]  if true, will output a "<" and a ">" to stderr around every copy/item
   #           subsidiary fetch. See description of this setting in docs/settings.md
   #
@@ -135,12 +127,6 @@ module Traject
       @settings = Traject::Indexer::Settings.new( self.class.default_settings).merge(settings)
 
       require_jars!
-
-      pool_size     = settings["horizon.thread_pool"].to_i
-
-      logger.debug("HorizonReader with thread pool size #{pool_size}")
-
-      @thread_pool  = Traject::ThreadPool.new( pool_size )
     end
 
     # Requires marc4j and jtds, and java_import's some classes.
@@ -293,20 +279,15 @@ module Traject
           # new record! Put old one on batch queue.
           record_batch << record if record
 
-          # Any exceptions from background threads?
-          @thread_pool.raise_collected_exception!
-
           # prepare and yield batch?
           if (record_count % batch_size == 0)
-            batch = record_batch
-            record_batch = []
-
-            @thread_pool.maybe_in_thread_pool(batch) do |batch|
-              enhance_batch!(extra_connection, batch)
-              batch.each do |r|
-                yield r
-              end
+            enhance_batch!(extra_connection, record_batch)
+            record_batch.each do |r|
+              # set current_bib_id for error logging
+              current_bib_id = r['001'].value
+              yield r
             end
+            record_batch.clear
           end
 
           # And start new record we've encountered.
@@ -382,20 +363,12 @@ module Traject
       # last one
       record_batch << record if record
 
-      logger.debug "HorizonReader: Waiting for threadpool work complete..."
-      @thread_pool.shutdown_and_wait
-      logger.debug "HorizonReader: threadpool work complete."
-      @thread_pool.raise_collected_exception!
-
-
       # yield last batch
       enhance_batch!(extra_connection, record_batch)
       record_batch.each do |r|
         yield r
       end
       record_batch.clear
-
-
 
     rescue Exception => e
       logger.fatal "HorizonReader, unexpected exception at bib id:#{current_bib_id}: #{Traject::Util.exception_to_log_message(e)}"
@@ -528,9 +501,6 @@ module Traject
       # It might be higher performance to refactor to re-use the same prepared statement
       # for each item/copy fetch... but appears to be no great way to do that in JDBC3
       # where you need to parameterize "IN" values. JDBC4 has got it, but jTDS is just JDBC3.
-      #
-      # Also, we need to be thread-safe now, so maybe better to create one
-      # each time, rather than risk sharing between threads accidentally. 
       pstmt = conn.prepareStatement(sql);
       rs = pstmt.executeQuery
 
@@ -613,7 +583,6 @@ module Traject
     def self.default_settings
       {
         "horizon.batch_size" => 400,
-        "horizon.thread_pool" => 2,
 
         "horizon.public_only" => true,
 
