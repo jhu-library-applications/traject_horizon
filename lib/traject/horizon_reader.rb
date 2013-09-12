@@ -297,15 +297,12 @@ module Traject
           record.append MARC::ControlField.new("001", bib_id.to_s)
         end
 
-
         tagord      = rs.getInt("tagord");
         tag         = rs.getString("tag")
 
         # just silently skip it, some weird row in the horizon db, it happens.
         # plus any of our exclude_tags.
         next if tag.nil? || tag == "" || exclude_tags.include?(tag)
-
-        numeric_tag = tag.to_i if tag =~ /\A\d+\Z/
 
         indicators = rs.getString("indicators")
 
@@ -314,52 +311,17 @@ module Traject
         # Have to get it as bytes and then convert it to String to avoid JDBC messing
         # up the encoding marc8 grr
         authtext = rs.getBytes("xref_longtext") || rs.getBytes("xref_text")
-        if authtext
-          authtext = String.from_java_bytes(authtext)
-          authtext.force_encoding("binary")
-        end
-
         text     = rs.getBytes("longtext") || rs.getBytes("text")
-        if text
-          text = String.from_java_bytes(text)
-          text.force_encoding("binary")
-        end
 
-        text = Traject::HorizonBibAuthMerge.new(tag, text, authtext).merge!
-
-        next if text.nil? # sometimes there's nothing there, skip it.
-
-        # convert from MARC8 to UTF8 if needed
-        text = convert_text!(text, error_handler)
-
-        if numeric_tag && numeric_tag == 0
-          record.leader = text
+        if tag == "000"
+          record.leader =  String.from_java_bytes text
           fix_leader!(record.leader)
-        elsif numeric_tag && numeric_tag == 1
-          # nothing, we add the 001 ourselves first
-        elsif numeric_tag && numeric_tag < 10
-          # control field
-          record.append MARC::ControlField.new(tag, text )
-        else
-          # data field
-          indicator1 = indicators.slice(0)
-          indicator2 = indicators.slice(1)
-
-          data_field = MARC::DataField.new(  tag,  indicator1, indicator2 )
-          record.append data_field
-
-          subfields  = text.split("\x1F")
-
-          subfields.each do |subfield|
-            next if subfield.empty?
-
-            subfield_code = subfield.slice(0)
-            subfield_text = subfield.slice(1, subfield.length)
-
-            data_field.append MARC::Subfield.new(subfield_code, subfield_text)
-          end
+        elsif tag != "001"
+          # we add an 001 ourselves with bib id in another part of code.
+          record.append build_marc_field!(error_handler, tag, indicators, text, authtext)
         end
       end
+
       # last one
       record_batch << record if record
 
@@ -372,6 +334,7 @@ module Traject
 
     rescue Exception => e
       logger.fatal "HorizonReader, unexpected exception at bib id:#{current_bib_id}: #{Traject::Util.exception_to_log_message(e)}"
+      logger.fatal e.backtrace.join("/n")
       raise e
     ensure
       logger.info("HorizonReader: Closing all JDBC objects...")
@@ -392,6 +355,61 @@ module Traject
       extra_connection.close if extra_connection
 
       logger.info("HorizonReader: Closed JDBC objects")
+    end
+
+    # Returns a DataField or ControlField, can return
+    # nil if determined no field can/should be created.
+    #
+    # Do not call for field '0' (leader) or field 001,
+    # this doesn't handle those, will just return nil.
+    #
+    # First arg is a Marc4J ErrorHandler object, kind of a weird implementation
+    # detail.
+    #
+    # Other args are objects fetched from Horizon db via JDBC --
+    # text and authtext must be byte arrays.
+    def build_marc_field!(error_handler, tag, indicators, text, authtext)
+      # convert text and authtext from java bytes to a ruby
+      # binary string.
+      if text
+        text = String.from_java_bytes(text)
+        text.force_encoding("binary")
+      end
+      if authtext
+        authtext = String.from_java_bytes(authtext)
+        authtext.force_encoding("binary")
+      end
+
+      text = Traject::HorizonBibAuthMerge.new(tag, text, authtext).merge!
+
+      return nil if text.nil? # sometimes there's nothing there, skip it.
+
+      # convert from MARC8 to UTF8 if needed
+      text = convert_text!(text, error_handler)
+
+      if MARC::ControlField.control_tag?(tag)
+        # control field
+        return MARC::ControlField.new(tag, text )
+      else
+        # data field
+        indicator1 = indicators.slice(0)
+        indicator2 = indicators.slice(1)
+
+        data_field = MARC::DataField.new(  tag,  indicator1, indicator2 )
+
+        subfields  = text.split("\x1F")
+
+        subfields.each do |subfield|
+          next if subfield.empty?
+
+          subfield_code = subfield.slice(0)
+          subfield_text = subfield.slice(1, subfield.length)
+
+          data_field.append MARC::Subfield.new(subfield_code, subfield_text)
+        end
+        return data_field
+      end
+
     end
 
     # Pass in an array of MARC::Records', adds fields for copy and item
