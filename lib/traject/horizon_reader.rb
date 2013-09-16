@@ -5,6 +5,7 @@ require 'traject/indexer/settings'
 require 'traject/horizon_bib_auth_merge'
 
 require 'marc'
+require 'marc/marc4j' # for marc4j jars
 
 module Traject
   #
@@ -133,7 +134,8 @@ module Traject
     def require_jars!
         Traject::Util.jruby_ensure_init!("Traject::HorizonReader")
 
-        Traject::Util.require_marc4j_jars(settings)
+        # ask marc-marc4j gem to load the marc4j jars
+        MARC::MARC4J.new(:jardir => settings['marc4j_reader.jar_dir'])
 
         # For some reason we seem to need to java_import it, and use
         # a string like this. can't just refer to it by full
