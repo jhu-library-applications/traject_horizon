@@ -230,7 +230,7 @@ module Traject
 
       # Turn Horizon's weird escaping into UTF8: <U+nnnn> where nnnn is a hex unicode
       # codepoint, turn it UTF8 for that codepoint
-      if settings["horizon.codepoint_translate"].to_s == "true" && settings["horizon.destination_encoding"] == "UTF8"
+      if false && settings["horizon.codepoint_translate"].to_s == "true" && settings["horizon.destination_encoding"] == "UTF8"
         text.gsub!(/\<U\+([0-9A-F]{4})\>/) do
           [$1.hex].pack("U")
         end
@@ -316,7 +316,10 @@ module Traject
         text     = rs.getBytes("longtext") || rs.getBytes("text")
 
         if tag == "000"
-          record.leader =  String.from_java_bytes text
+          # Horizon puts a \x1E marc field terminator on the end of hte
+          # leader in the db too, but that's not really part of it.
+          record.leader =  String.from_java_bytes(text).chomp("\x1E")
+
           fix_leader!(record.leader)
         elsif tag != "001"
           # we add an 001 ourselves with bib id in another part of code.
@@ -569,6 +572,14 @@ module Traject
       if settings['horizon.destination_encoding'] == "UTF8"
         leader[9] = 'a'
       end
+
+      # Do not understand why this voodoo that should be a no-op is neccesary,
+      # but get a mysterious and hard to isolate/reproduce encoding
+      # bug without it, but not with it. Think it may be the same
+      # but as this:
+      # https://github.com/jruby/jruby/issues/886
+      leader.force_encoding(leader.encoding)
+
     end
 
     def include_some_holdings?
