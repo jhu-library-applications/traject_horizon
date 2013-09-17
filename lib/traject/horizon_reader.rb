@@ -315,6 +315,7 @@ module Traject
         authtext = rs.getBytes("xref_longtext") || rs.getBytes("xref_text")
         text     = rs.getBytes("longtext") || rs.getBytes("text")
 
+
         if tag == "000"
           # Horizon puts a \x1E marc field terminator on the end of hte
           # leader in the db too, but that's not really part of it.
@@ -323,7 +324,8 @@ module Traject
           fix_leader!(record.leader)
         elsif tag != "001"
           # we add an 001 ourselves with bib id in another part of code.
-          record.append build_marc_field!(error_handler, tag, indicators, text, authtext)
+          field = build_marc_field!(error_handler, tag, indicators, text, authtext)
+          record.append field unless field.nil?
         end
       end
 
@@ -332,6 +334,7 @@ module Traject
 
       # yield last batch
       enhance_batch!(extra_connection, record_batch)
+
       record_batch.each do |r|
         yield r
       end
@@ -374,6 +377,7 @@ module Traject
     # Other args are objects fetched from Horizon db via JDBC --
     # text and authtext must be byte arrays.
     def build_marc_field!(error_handler, tag, indicators, text, authtext)
+
       # convert text and authtext from java bytes to a ruby
       # binary string.
       if text
