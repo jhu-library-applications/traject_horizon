@@ -565,6 +565,7 @@ module Traject
 
     # Mutate string passed in to fix leader bytes for marc21
     def fix_leader!(leader)
+
       if leader.length < 24
         # pad it to 24 bytes, leader is supposed to be 24 bytes
         leader.replace(  leader.ljust(24, ' ')  )
@@ -577,12 +578,26 @@ module Traject
         leader[9] = 'a'
       end
 
-      # Do not understand why this voodoo that should be a no-op is neccesary,
-      # but get a mysterious and hard to isolate/reproduce encoding
-      # bug without it, but not with it. Think it may be the same
-      # but as this:
-      # https://github.com/jruby/jruby/issues/886
-      leader.force_encoding(leader.encoding)
+      # leader should only have ascii chars in it; invalid non-ascii
+      # chars can cause ruby encoding problems down the line.
+      # additionally, a force_encoding may be neccesary to
+      # deal with apparent weird hard to isolate jruby bug prob same one
+      # as at https://github.com/jruby/jruby/issues/886
+      leader.force_encoding('ascii')
+
+      unless leader.valid_encoding?
+        # replace any non-ascii chars with a space.
+
+        # Can't access leader.chars when it's not a valid encoding
+        # without a weird index out of bounds exception, think it's
+        # https://github.com/jruby/jruby/issues/886
+        # Grr.
+
+        #leader.replace( leader.chars.collect { |c| c.valid_encoding? ? c : ' ' }.join('') )
+        leader.replace(leader.split('').collect { |c| c.valid_encoding? ? c : ' ' }.join(''))
+      end
+
+
 
     end
 
