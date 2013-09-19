@@ -128,6 +128,8 @@ module Traject
       @settings = Traject::Indexer::Settings.new( self.class.default_settings).merge(settings)
 
       require_jars!
+
+      logger.info("HorizonReader reading records from #{settings["horizon.jdbc_url"]}")
     end
 
     # Requires marc4j and jtds, and java_import's some classes.
