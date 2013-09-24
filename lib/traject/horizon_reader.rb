@@ -212,6 +212,18 @@ module Traject
         sql += " AND " + clauses.join(" AND ") + " "
       end
 
+      # without the order by, rows USUALLY come back in order anyway,
+      # but sometimes they don't -- when they don't, it can cause one real
+      # record to be split up into multiple partial output record, which
+      # cna overwrite each other in the solr index.
+      #
+      # So we sort -- which seems to make query results come back somewhat
+      # slower, but SEEMS to be managagle. Ideally we might include 'tagord'
+      # in the sort too, but that seems to make performance even worse,
+      # we're willing to risk tags not being reassembled in exactly the
+      # right order, usually they are anyway, and it doesn't usually matter anyway.
+      sql+= " ORDER BY b.bib# " # ", tagord" would be even better, but slower.
+
       pstmt = conn.prepareStatement(sql);
 
       # this may be what's neccesary to keep the driver from fetching
