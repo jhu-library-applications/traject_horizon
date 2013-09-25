@@ -355,9 +355,7 @@ module Traject
       record_batch.clear
 
     rescue Exception => e
-      logger.fatal "HorizonReader, unexpected exception at bib id:#{current_bib_id}: #{Traject::Util.exception_to_log_message(e)}"
-      logger.fatal e.backtrace.join("/n")
-      raise e
+      logger.fatal "HorizonReader, unexpected exception at bib id:#{current_bib_id}: #{e}"    
     ensure
       logger.info("HorizonReader: Closing all JDBC objects...")
 
