@@ -356,6 +356,7 @@ module Traject
 
     rescue Exception => e
       logger.fatal "HorizonReader, unexpected exception at bib id:#{current_bib_id}: #{e}"    
+      raise e
     ensure
       logger.info("HorizonReader: Closing all JDBC objects...")
 
