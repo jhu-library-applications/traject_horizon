@@ -54,6 +54,9 @@ settings do
   # or "sqlserver:", including username on the end but not password:
   provide "horizon.jdbc_url", "jdbc:jtds:sybase://horizonserver.university.edu:2025/horizon_db;user=esys"
 
+  # Instead of horizon.jdbc_url, you can also use individual
+  # horizon.host, horizon.port, horizon.database, horizon.user
+
   # DB password in seperate setting
   provide "horizon.jdbc_password", "drilg53"
 
