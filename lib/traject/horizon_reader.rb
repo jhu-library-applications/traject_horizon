@@ -18,7 +18,17 @@ module Traject
   #                     it from logging. Eg: "jdbc:jtds:sybase://horizon.lib.univ.edu:2025/dbname;user=dbuser"
   #                     * In command line, you'll have to use quotes: -s 'horizon.jdbc_url=jdbc:jtds:sybase://horizon.lib.univ.edu:2025/dbname;user=dbuser'
   #
-  # [horizon.jdbc_password] Password to use for JDBC connection. We'll try to suppress it from being logged.
+  #
+  # [horizon.password] Password to use for JDBC connection. We'll try to suppress it from being logged.
+  #
+  # Instead of jdbc_url, you can provide all the other elements individually:
+  #
+  # [horizon.host]
+  # [horizon.port] (default 2025)
+  # [horizon.user]
+  # [horizon.database] (default 'horizon')
+  # [horizon.jtds_type] default 'sybase', or 'sqlserver'
+  #
   #
   # == What to export
   #
@@ -129,7 +139,7 @@ module Traject
 
       require_jars!
 
-      logger.info("   #{self.class.name} reading records from #{settings["horizon.jdbc_url"]}")
+      logger.info("   #{self.class.name} reading records from #{jdbc_url(false)}")
     end
 
     # Requires marc4j and jtds, and java_import's some classes.
@@ -622,16 +632,36 @@ module Traject
       settings['horizon.source_encoding'] == "MARC8" && settings['horizon.destination_encoding'] == "UTF8"
     end
 
+    # Looks up JDBC url from settings, either 'horizon.jdbc_url' if present,
+    # or individual settings. Will include password from `horizon.password` 
+    # only if given a `true` arg -- leave false for output to logs, to keep
+    # password out of logs. 
+    def jdbc_url(include_password=false)
+      url = if settings.has_key? "horizon.jdbc_url"
+        settings["horizon.jdbc_url"]
+      else
+        jtds_type = settings['horizon.jtds_type'] || 'sybase'
+        database  = settings['horizon.database']  || 'horizon'
+        host      = settings['horizon.host']      or raise ArgumentError.new("Need horizon.host setting, or horizon.jdbc_url")
+        port      = settings['horizon.port']      || '2025'
+        user      = settings['horizon.user']      or raise ArgumentError.new("Need horizon.user setting, or horizon.jdbc_url")
 
-    def open_connection!
-      logger.debug("HorizonReader: Opening JDBC Connection at #{settings["horizon.jdbc_url"]} ...")
-
-      url = settings["horizon.jdbc_url"]
-      if settings["horizon.jdbc_password"]
-        url += ";password=#{settings['horizon.jdbc_password']}"
+        "jdbc:jtds:#{jtds_type}://#{host}:#{port}/#{database};user=#{user}"
       end
 
-      conn =  java.sql.DriverManager.getConnection( url )
+      if include_password
+        password  = settings['horizon.password'] or raise ArgumentError.new("Need horizon.password setting")
+        url += ";password=#{password}"
+      end
+
+      return url
+    end
+
+
+    def open_connection!
+      logger.debug("HorizonReader: Opening JDBC Connection at #{jdbc_url(false)} ...")
+
+      conn =  java.sql.DriverManager.getConnection( jdbc_url(true) )
       # If autocommit on, fetchSize later has no effect, and JDBC slurps
       # the whole result set into memory, which we can not handle.
       conn.setAutoCommit false
