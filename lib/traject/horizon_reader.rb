@@ -254,8 +254,8 @@ module Traject
 
       # Turn Horizon's weird escaping into UTF8: <U+nnnn> where nnnn is a hex unicode
       # codepoint, turn it UTF8 for that codepoint
-      if false && settings["horizon.codepoint_translate"].to_s == "true" && settings["horizon.destination_encoding"] == "UTF8"
-        text.gsub!(/\<U\+([0-9A-F]{4})\>/) do
+      if settings["horizon.codepoint_translate"].to_s == "true" && settings["horizon.destination_encoding"] == "UTF8"
+        text.gsub!(/\<U\+([0-9A-Fa-f]{4})\>/) do
           [$1.hex].pack("U")
         end
       end
