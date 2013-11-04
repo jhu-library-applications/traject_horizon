@@ -16,6 +16,11 @@ describe "turning weird Horizon escape sequences into unicode" do
       assert_equal "A hangul character: ᄒ, okay<!>", converted
     end
 
+    it "converts rlm" do
+      converted = @reader.convert_text!("Weird &#x200F; but these aren't changed &#x2000; &#200F etc.", org.marc4j.ErrorHandler.new)
+      assert_equal "Weird \u200F but these aren't changed &#x2000; &#200F etc.", converted
+    end
+
   end
 
 end
