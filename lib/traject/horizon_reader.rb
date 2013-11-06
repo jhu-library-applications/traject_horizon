@@ -117,11 +117,10 @@ module Traject
   #   codepoint escaping to actual UTF-8 bytes. Defaults to true. Will be ignored
   #   unless horizon.destination_encoding is UTF8 though.
   #
-  # [horizon.direction_marks] Horizon bizarrely seems to embed Unicode right-to-left mark
-  #   as literal "&#x200F;" (using HTML escaping?!?). By default, set to 'replace', we'll
-  #   replace them with actual UTF-8 rlm's, which seems to be what HIP does, although
-  #   in most cases these also seem to be useless. Can also set to 'ignore' (leave them
-  #   as is), or 'remove' (delete them altogether, which would probably be just fine.)
+  # [horizon.character_reference_translate] Default true. Convert HTML/XML-style
+  #   character references like "&#x200F;" to actual UTF-8 bytes, when converting
+  #   to UTF8. These character references are oddly legal representations of UTF8 in
+  #   MARC8. http://www.loc.gov/marc/specifications/speccharconversion.html#lossless
   #
   # == Misc
   #
@@ -260,19 +259,23 @@ module Traject
 
       # Turn Horizon's weird escaping into UTF8: <U+nnnn> where nnnn is a hex unicode
       # codepoint, turn it UTF8 for that codepoint
-      if settings["horizon.codepoint_translate"].to_s == "true" && settings["horizon.destination_encoding"] == "UTF8"
-        text.gsub!(/\<U\+([0-9A-Fa-f]{4})\>/) do
+      if settings["horizon.destination_encoding"] == "UTF8" &&
+          settings["horizon.codepoint_translate"].to_s == "true" || settings["horizon.character_reference_translate"]
+
+          regexp = if settings["horizon.codepoint_translate"].to_s == "true" && settings["horizon.character_reference_translate"].to_s == "true"
+            # unicode codepoint in either HTML char reference form OR
+            # weird horizon form. 
+             /(?:\<U\+|&#x)([0-9A-Fa-f]{4})(?:\>|;)/
+          elsif settings["horizon.codepoint_translate"].to_s == "true"
+            # just weird horizon form
+            /\<U\+([0-9A-Fa-f]{4})\>/
+          else # just character references
+            /&#x([0-9A-Fa-f]{4});/
+          end
+          
+        text.gsub!(regexp) do
           [$1.hex].pack("U")
         end
-      end
-
-      if settings["horizon.direction_marks"].to_s != 'ignore' && settings["horizon.destination_encoding"] == "UTF8"
-        if settings["horizon.direction_marks"].to_s == 'remove'
-          rlm_replace = ''
-        else          
-          rlm_replace = "\u200F"        
-        end
-        text.gsub!("&#x200F;", rlm_replace)
       end
 
       return text
@@ -697,7 +700,7 @@ module Traject
         "horizon.source_encoding"      => "MARC8",
         "horizon.destination_encoding" => "UTF8",
         "horizon.codepoint_translate"  => true,
-        "horizon.direction_marks"      => "replace",
+        "horizon.character_reference_translate" => true, 
 
         "horizon.item_tag"          => "991",
         # Crazy isnull() in the call_type join to join to call_type directly on item
