@@ -253,14 +253,17 @@ module Traject
     end
 
     # Converts from Marc8 to UTF8 if neccesary.
-    # Also replaces horizon <U+nnnn> codes if needed, as well as weird Horizon HTML-escaped rlm
+    #
+    # Also replaces escaped unicode codepoints using custom Horizon "<U+nnnn>" format
+    # Or standard MARC 'lossless encoding' "&#xHHHH;" format. 
     def convert_text!(text, error_handler)
       text = AnselToUnicode.new(error_handler, true).convert(text) if convert_marc8_to_utf8?
 
       # Turn Horizon's weird escaping into UTF8: <U+nnnn> where nnnn is a hex unicode
       # codepoint, turn it UTF8 for that codepoint
       if settings["horizon.destination_encoding"] == "UTF8" &&
-          settings["horizon.codepoint_translate"].to_s == "true" || settings["horizon.character_reference_translate"]
+          (settings["horizon.codepoint_translate"].to_s == "true" ||
+           settings["horizon.character_reference_translate"].to_s == "true")
 
           regexp = if settings["horizon.codepoint_translate"].to_s == "true" && settings["horizon.character_reference_translate"].to_s == "true"
             # unicode codepoint in either HTML char reference form OR
