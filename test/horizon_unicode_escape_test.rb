@@ -21,6 +21,12 @@ describe "turning weird Horizon escape sequences into unicode" do
       assert_equal "Weird \u200F but these aren't changed #x2000; &#200F etc.", converted
     end
 
+    it "erases illegal control chars" do
+      converted = @reader.convert_text!("Some illegal control chars: '\x07' '\x02'; and a legal one: '\x1F'.", org.marc4j.ErrorHandler.new)
+
+      assert_equal "Some illegal control chars: '' ''; and a legal one: '\x1F'.", converted
+    end
+
   end
 
 end

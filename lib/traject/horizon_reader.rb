@@ -122,6 +122,10 @@ module Traject
   #   to UTF8. These character references are oddly legal representations of UTF8 in
   #   MARC8. http://www.loc.gov/marc/specifications/speccharconversion.html#lossless
   #
+  # Note HorizonReader will also remove control chars from output (except for ones
+  # with legal meaning in binary MARC) -- these are errors in Horizon db which mean
+  # nothing, are illegal in MARC binary serialization, and can mess things up. 
+  #
   # == Misc
   #
   # [horizon.batch_size] Batch size to use for fetching item/copy info on each bib. Default 400.
@@ -280,6 +284,12 @@ module Traject
           [$1.hex].pack("U")
         end
       end
+
+      # eliminate illegal control chars. All ASCII less than 0x20
+      # _except_ for four legal ones (including MARC delimiters). 
+      # http://www.loc.gov/marc/specifications/specchargeneral.html#controlfunction
+      # this is all bytes from 0x00 to 0x19 except for the allowed 1B, 1D, 1E, 1F. 
+      text.gsub!(/[\x00-\x1A\x1C]/, '')
 
       return text
     end
