@@ -210,14 +210,18 @@ module Traject
       EOS
 
       sql = <<-EOS
-        SELECT b.*, bc.staff_only
+        SELECT b.*
         FROM fullbib b
-        JOIN bib_control bc on b.bib# = bc.bib#
         WHERE 1 = 1
       EOS
 
+      # Oddly, Sybase seems to do a lot BETTER when we make this a sub-query
+      # as opposed to a join. Join was resulting in "Can't allocate space for object 'temp worktable' in database 'tempdb'"
+      # from Sybase, but somehow we get away with subquery?
+      #
+      # Note this subquery we managed to not refer to outer scope, that's the key. 
       if settings["horizon.public_only"].to_s == "true"
-        sql += " AND staff_only != 1"
+        sql+= " AND b.bib# NOT IN (SELECT DISTINCT bc.bib# from bib_control bc WHERE bc.staff_only = 1) "
       end
 
       # settings should not be coming from untrusted user input not going
@@ -231,13 +235,15 @@ module Traject
         sql += " AND " + clauses.join(" AND ") + " "
       end
 
-      # without the order by, rows USUALLY come back in order anyway,
-      # but sometimes they don't -- when they don't, it can cause one real
+      # without the order by, rows come back in mostly the right order,
+      # by bib#, but fairly common do NOT as well.
+      # -- when they don't, it can cause one real
       # record to be split up into multiple partial output record, which
       # cna overwrite each other in the solr index.
       #
-      # So we sort -- which seems to make query results come back somewhat
-      # slower, but SEEMS to be managagle. Ideally we might include 'tagord'
+      # So we sort -- which makes query slower, and makes it a lot harder
+      # to avoid Sybase "cannot allocate space" errors, but we've got
+      # no real choice. Ideally we might include 'tagord'
       # in the sort too, but that seems to make performance even worse,
       # we're willing to risk tags not being reassembled in exactly the
       # right order, usually they are anyway, and it doesn't usually matter anyway.
