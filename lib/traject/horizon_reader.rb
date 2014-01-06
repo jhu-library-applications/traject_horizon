@@ -249,7 +249,7 @@ module Traject
       # right order, usually they are anyway, and it doesn't usually matter anyway.
       sql+= " ORDER BY b.bib# " # ", tagord" would be even better, but slower.
 
-      pstmt = conn.prepareStatement(sql);
+      pstmt = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 
       # this may be what's neccesary to keep the driver from fetching
       # entire result set into memory.
@@ -588,7 +588,7 @@ module Traject
       # It might be higher performance to refactor to re-use the same prepared statement
       # for each item/copy fetch... but appears to be no great way to do that in JDBC3
       # where you need to parameterize "IN" values. JDBC4 has got it, but jTDS is just JDBC3.
-      pstmt = conn.prepareStatement(sql);
+      pstmt = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
       rs = pstmt.executeQuery
 
 
