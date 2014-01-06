@@ -685,6 +685,8 @@ module Traject
 
         "jdbc:jtds:#{jtds_type}://#{host}:#{port}/#{database};user=#{user}"
       end
+      # Not sure if useCursors makes a difference, but just in case.
+      url += ";useCursors=true"
 
       if include_password
         password  = settings['horizon.password'] or raise ArgumentError.new("Need horizon.password setting")
