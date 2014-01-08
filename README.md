@@ -149,6 +149,25 @@ Currently, item/copy information may not be treated entirely consistent here,
 there may be edge-case encoding bugs related to non-ascii item/copy notes etc,
 and it may not be possible to output them in Marc8. Sorry.
 
+## Note on Horizon deleted records
+
+When records are deleted in horizon, they remain in the Horizon database for a while until purged. 
+While deleted records remain, they have leader byte 5 set to 'd', which indicates deleted in Marc21. 
+
+You may want to skip these records when indexing. There's no feature
+in `traject_horizon` to do that at present, but you can use the standard
+traject `skip!` feature. At the beginning of your traject configuration:
+
+~~~ruby
+# Skip records with leader byte 5 'd', those are records marked
+# for deletion but not yet purged from horizon.
+each_record do |record, context|
+  if record.leader[5] == 'd'
+    context.skip!("Leader byte 5 is 'd', record marked for deletion in Horizon")
+  end
+end
+~~~
+
 ## Challenges
 
 I had to reverse engineer the Horizon database to figure out how to turn it into
