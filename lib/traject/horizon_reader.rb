@@ -29,6 +29,12 @@ module Traject
   # [horizon.database] (default 'horizon')
   # [horizon.jtds_type] default 'sybase', or 'sqlserver'
   #
+  # [horizon.timeout] value in SECONDS given to jtds driver for socketTimeout and loginTimeout. 
+  #                   if this is not set, if Horizon db or server goes down in mid-export,
+  #                   your program may hang forever. However, the trade-off is when this is set,
+  #                   a slow query may trigger timeout. As a compromise, we've set DEFAULT
+  #                   to 1200 seconds (20 minutes).
+  #
   #
   # == What to export
   #
@@ -688,6 +694,10 @@ module Traject
       # Not sure if useCursors makes a difference, but just in case.
       url += ";useCursors=true"
 
+      if timeout = settings['horizon.timeout']
+        url += ";socketTimeout=#{timeout};loginTimeout=#{timeout}"
+      end
+
       if include_password
         password  = settings['horizon.password'] or raise ArgumentError.new("Need horizon.password setting")
         url += ";password=#{password}"
@@ -714,6 +724,8 @@ module Traject
 
     def self.default_settings
       {
+        "horizon.timeout"    => 1200, # 1200 seconds == 20 minutes
+
         "horizon.batch_size" => 400,
 
         "horizon.public_only" => true,
