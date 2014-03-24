@@ -74,7 +74,7 @@ module Traject
         # it from authtext, so next time this subfield is asked for,
         # subsequent subfield with that code will be used.
         substitute = nil
-        authtext.sub!(/\x1F#{auth_subfield}([^\x1F\x1E]*)/) do
+        authtext.sub!(/\x1F#{Regexp.escape auth_subfield}([^\x1F\x1E]*)/) do
           substitute = $1
           ''
         end
