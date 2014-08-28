@@ -635,6 +635,9 @@ module Traject
       if leader.length < 24
         # pad it to 24 bytes, leader is supposed to be 24 bytes
         leader.replace(  leader.ljust(24, ' ')  )
+      elsif leader.length > 24
+        # Also a problem, slice it
+        leader.replace( leader.byteslice(0, 24))
       end
       # http://www.loc.gov/marc/bibliographic/ecbdldrd.html
       leader[10..11] = '22'
