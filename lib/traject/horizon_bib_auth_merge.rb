@@ -10,6 +10,8 @@ module Traject
   class HorizonBibAuthMerge
     attr_reader :bibtext, :authtext, :tag
 
+    @@up_to_subfield_t_re = /\A(.*)\x1Ft/ 
+
     # Pass in bibtext and authtext as String -- you probably need to get
     # column values from JDBC as bytes and then use String.from_java_bytes
     # to avoid messing up possible Marc8 encoding.
@@ -42,6 +44,13 @@ module Traject
       return authtext if bibtext.nil?
       return bibtext  if authtext.nil?
 
+
+      # For 240 and 243, it seems that anything before the first $t should
+      # be ignored in authtext template -- we need to actually remove it, 
+      # so later when we append any leftover fields, we don't get those. 
+      if tag == '240' || tag == '243'
+        authtext.sub!(@@up_to_subfield_t_re, "\x1Ft")
+      end
 
 
       # We need to do a crazy combination of template in text with values in authtext.
@@ -113,6 +122,17 @@ module Traject
           "\x1F#{subfield}"
         end
       end
+
+      # Sometimes there's leftover text at the end of authtext that wasn't 
+      # included in the bibtext template. Horizon's marc reconstruction
+      # seems to just include this on the end, we will too. 
+      # Relies on 'prior to $t' fields being removed from 240 and 243 earlier,
+      # to avoid including them when we shouldn't. 
+      if authtext.length > 0
+        bibtext << authtext
+      end
+
+
 
       # We mutated bibtext to fill in template, now just return it.
       return bibtext

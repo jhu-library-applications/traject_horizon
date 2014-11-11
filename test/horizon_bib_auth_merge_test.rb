@@ -55,4 +55,9 @@ describe "HorizonBibAuthMerge" do
     assert_equal "aMiscellaneous publications (Pan American Sanitary Bureau) ;vno. 79.", HzMerge.new("830", "a) ;vno. 79.", "aMiscellaneous publications (Pan American Sanitary Bureau) ;").merge!
   end
 
+  it "handles extra literals in authtext" do
+    assert_equal "aKapsperger, Giovanni Girolamo,d1580-1651.tArie passeggiate.nlibro 1.pUltimi miei sospiri.", 
+      HzMerge.new("700", "a,d.t.", "aKapsperger, Giovanni Girolamo,d1580-1651.tArie passeggiate,nlibro 1.pUltimi miei sospiri.").merge!
+  end
+
 end
