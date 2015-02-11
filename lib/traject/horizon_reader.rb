@@ -159,7 +159,7 @@ module Traject
 
     # Requires marc4j and jtds, and java_import's some classes.
     def require_jars!
-        Traject::Util.jruby_ensure_init!("Traject::HorizonReader")
+        require 'jruby'
 
         # ask marc-marc4j gem to load the marc4j jars
         MARC::MARC4J.new(:jardir => settings['marc4j_reader.jar_dir'])
