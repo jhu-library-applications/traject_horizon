@@ -17,7 +17,7 @@ yet further with more development of multi-threaded processing.
 
 traject_horizon is a plugin for [traject](http://github.com/jrochkind/traject), which
 needs to run under jruby. We recommend [chruby](https://github.com/postmodern/chruby)
-for managing multiple ruby versions, see it's instructions for installing jruby. 
+for managing multiple ruby versions, see it's instructions for installing jruby.
 
 Then, with jruby active (`$ chruby jruby`), you can install both `traject`
 and `traject_horizon` with:
@@ -45,7 +45,7 @@ settings for the Horizon export.
 # Require traject/horizon to load the gem, including
 # the Traject::HorizonReader we'll subsequently
 # configure to be used
-require 'traject/horizon'
+require 'traject_horizon'
 
 settings do
   store "reader_class_name", "Traject::HorizonReader"
@@ -58,7 +58,7 @@ settings do
   # horizon.host, horizon.port, horizon.database, horizon.user
 
   # DB password in seperate setting
-  provide "horizon.jdbc_password", "drilg53"
+  provide "horizon.password", "drilg53"
 
   # Do you want to include copy/item holdings information?
   # this setting says to include "top-level" holdings,
@@ -151,8 +151,8 @@ and it may not be possible to output them in Marc8. Sorry.
 
 ## Note on Horizon deleted records
 
-When records are deleted in horizon, they remain in the Horizon database for a while until purged. 
-While deleted records remain, they have leader byte 5 set to 'd', which indicates deleted in Marc21. 
+When records are deleted in horizon, they remain in the Horizon database for a while until purged.
+While deleted records remain, they have leader byte 5 set to 'd', which indicates deleted in Marc21.
 
 You may want to skip these records when indexing. There's no feature
 in `traject_horizon` to do that at present, but you can use the standard
