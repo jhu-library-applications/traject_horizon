@@ -302,7 +302,7 @@ module Traject
       # http://www.loc.gov/marc/specifications/specchargeneral.html#controlfunction
       # this is all bytes from 0x00 to 0x19 except for the allowed 1B, 1D, 1E, 1F. 
       begin
-        text.gsub!(/[\x00-\x1A\/1F]/, '')
+        text.gsub!(/[\x00-\x1A\x1C]/, '')
       rescue StandardError => e
         logger.info "HorizonReader, illegal chars found #{e}"
         logger.info text
